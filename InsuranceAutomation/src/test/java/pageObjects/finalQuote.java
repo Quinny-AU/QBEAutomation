@@ -16,10 +16,12 @@ public class finalQuote {
 	By expand = By.cssSelector("span[class='glyphicon glyphicon-plus']");
 	By date = By.xpath("//span[contains(text(), 'Start date')]");
 	By duration = By.xpath("//span[contains(text(), 'Duration')]");
-	By tax = By.xpath("//span[contains(text(), 'Input Tax')]");
+	By tax = By.xpath("//span[contains(text(), 'Input tax')]");
 	By dob = By.xpath("//span[contains(text(), 'Born')]");
 	By customer = By.xpath("//span[contains(text(), 'Customer')]");
 	By age = By.xpath("//span[contains(text(), 'Under 23')]");
+	By licence = By.xpath("//span[contains(text(), 'Valid licence')]");
+	By demerits = By.xpath("//span[contains(text(), 'Lost demerits')]");
 	
 	public finalQuote(WebDriver driver) {
 		this.driver = driver;
@@ -59,5 +61,11 @@ public class finalQuote {
 	}
 	public WebElement quoteAge() {
 		return driver.findElement(age);
+	}
+	public WebElement quoteLicence() {
+		return driver.findElement(licence);
+	}
+	public WebElement quoteDemerits() {
+		return driver.findElement(demerits);
 	}
 }

@@ -3,6 +3,8 @@ package stepDefinitions;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -66,10 +69,8 @@ public class StepDefinitions extends initializeBrowser{
 	String checkTax = null;
 	String checkDOB = null;
 	String checkAge = null;
-	/*
-	 * valid license
-	 * lost demerits
-	 */
+	String checkLicence = null;
+	String checkDemeritLoss = null;
 	
 	@Given("^I'm on the homepage$")
     public void im_on_the_homepage() throws Throwable {
@@ -176,7 +177,7 @@ public class StepDefinitions extends initializeBrowser{
 	    	driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 	    	
 	    	Select status = new Select(quote.vehicleStatusSelect());
-	    	status.selectByVisibleText("Current");
+	    	status.selectByValue("1");
 	    	
 	    	quote.insuranceDateSelect().click();
 	    	
@@ -212,11 +213,6 @@ public class StepDefinitions extends initializeBrowser{
     	String check = null;
     	finalQuote quote = new finalQuote(driver);
     	
-    	//Assert.assertTrue(quote.quoteYear().getText().contains(checkYear));	
-    	//Assert.assertTrue(quote.quoteMake().getText().contains(checkMake)); 	
-    	//Assert.assertTrue(quote.quoteShape().getText().contains(checkShape)); 	
-    	//Assert.assertTrue(quote.quoteUsage().getText().contains(checkUsage));
-    	
     	//String manipulation to allow for assert equals check
     	str = quote.quoteYear().getText().split(" ", 2);
     	check = str[1];
@@ -239,12 +235,29 @@ public class StepDefinitions extends initializeBrowser{
     	Assert.assertEquals(checkUsage, check);
     	
     	quote.quoteExpand().click();
+    	quote.quoteLocation().click();
+    	try {
+    		driver.findElement(By.xpath("/html[1]/body[1]/div[1]/div[4]/div[1]/div[1]/div[2]/span[1]/a[1]")).click();
+    	}
+    	catch(NoSuchElementException e) {
+    		System.out.println("Element not visible, continuing");
+    	}
     	
-    	str = quote.quoteLocation().getText().split("\\ ... ", 2);
-    	check = str[0] + str[1];
     	
-    	str = check.split("at ", 2);
-    	check = str[1];
+    	//Below is needed to re-format both elements being checked as this also used different formats
+    	//Just works to get everything into one string without spaces which won't affect the comparison
+    	if(checkCustType.equals("Individual / sole trader")) {
+	    	str = quote.quoteLocation().getText().split("at ", 2);
+	    	check = str[1];
+    		check = check.replaceAll("\\ ", "");
+	    	check = check.replaceAll("\\...", "");
+    	}
+    	else {
+    		str = quote.quoteLocation().getText().split("at ", 2);
+	    	check = str[1];
+    		check = check.replaceAll("\\ ", "");
+    	}
+    	checkLocation = checkLocation.replace(" ", "");
     	
     	Assert.assertEquals(checkLocation, check);
     	
@@ -253,34 +266,73 @@ public class StepDefinitions extends initializeBrowser{
     	
     	Assert.assertEquals(checkDate, check);
     	
+    	
     	str = quote.quoteCustomer().getText().split(" ", 2);
     	check = str[1];
+    	//needed this due to formatting differences on the final quote page
+    	if(checkCustType.equals("Individual / sole trader")) {
+    		System.out.println("Need to manipulate");
+    		check = check.replaceAll("\\/ ... ", "\\ / ");
+    		check = check.replace("S", "s");
+    	}
     	
-    	//Assert.assertTrue(checkCustType.contains(check));
+    	Assert.assertEquals(checkCustType, check);
     	
-    	driver.findElement(By.xpath("/html[1]/body[1]/div[1]/div[4]/div[1]/div[1]/div[2]/span[1]/a[1]")).click();
-    	
-    	//Assert.assertEquals(checkCustType, check);
-    	
-    	System.out.println("Tax: " + checkTax);
-    	
-    	System.out.println("Duration: " + checkDuration);
-    	
-    	checkDOB = checkDOB.replaceAll("/", ".");
-    	str = quote.quoteDOB().getText().split(" ", 2);
+    	str = quote.quoteTax().getText().split("tax ", 2);
     	check = str[1];
     	
-    	Assert.assertEquals(checkDOB, check);
+    	Assert.assertEquals(checkTax, check);
+    	
+    	System.out.println("Duration: " + checkDuration);
+    	str = quote.quoteDuration().getText().split("Duration ", 2);
+    	check = str[1];
+    	check = check.replace("M", "m");
+    	Assert.assertEquals(checkDuration, check);
+    	
+    	/*
+    	 * Check if <= 1992 for extra steps
+    	 * check if any drivers under 23
+    	 * 		if no then need to go to next step
+    	 * 		check if valid licence
+    	 * 			if yes go to next step
+    	 * 			check for demerit point loss
+    	 */
+    	if(checkCustType.equals("Individual / sole trader")) {
+	    	checkDOB = checkDOB.replaceAll("/", ".");
+	    	str = quote.quoteDOB().getText().split(" ", 2);
+	    	check = str[1];
+	    	Assert.assertEquals(checkDOB, check);
+	    	
+	    	//Check for the conditional elements and verify
+	    	if(checkAge != null) {
+	    		str = quote.quoteAge().getText().split("23 ", 2);
+	    		check = str[1];
+	    		System.out.println("checkAge: " + checkAge + " | check:" + check);
+	    		Assert.assertEquals(checkAge, check);
+	    	}
+	    	if(checkLicence != null) {
+	    		str = quote.quoteLicence().getText().split("licence ", 2);
+	    		check = str[1];
+	    		System.out.println("checkLicence: " + checkLicence + " | check:" + check);
+	    		Assert.assertEquals(checkLicence, check);
+	    	}
+	    	if(checkDemeritLoss != null) {
+	    		str = quote.quoteDemerits().getText().split("demerits ", 2);
+	    		check = str[1];
+	    		System.out.println("checkDemerits: " + checkDemeritLoss + " | check:" + check);
+	    		Assert.assertEquals(checkDemeritLoss, check);
+	    	}
+    	}
     	
     	Thread.sleep(2000);
     	
     	System.out.println("All Assertions Passed");
     	
-    	 Cell cell = dataSheet.getRow(1).getCell(5);
+    	 Cell cell = dataSheet.getRow(1).getCell(8);
          if(cell == null){
-         	dataSheet.getRow(1).createCell(5);
+         	dataSheet.getRow(1).createCell(8);
          }
-         dataSheet.getRow(1).getCell(5).setCellValue("Pass");
+         dataSheet.getRow(1).getCell(8).setCellValue("Pass");
          
          FileOutputStream fos = new FileOutputStream(file);
          dataWorkbook.write(fos);
@@ -365,6 +417,9 @@ public class StepDefinitions extends initializeBrowser{
         String duration = dataSheet.getRow(1).getCell(2).getStringCellValue();
         String tCredit = dataSheet.getRow(1).getCell(3).getStringCellValue();
         String dob = dataSheet.getRow(1).getCell(4).getStringCellValue();
+        String underAge = dataSheet.getRow(1).getCell(5).getStringCellValue();
+        String validLicence = dataSheet.getRow(1).getCell(6).getStringCellValue();
+        int dpLoss = (int) dataSheet.getRow(1).getCell(7).getNumericCellValue();
         
         //Sorting out which customer type is to be selected
         int index = 0;
@@ -387,11 +442,11 @@ public class StepDefinitions extends initializeBrowser{
         
        if(duration.equals("12 months")) {
         	insurance.insuranceTerm().get(0).click();
-        	checkDuration = insurance.insuranceTerm().get(0).getAttribute("label");
+        	checkDuration = "12 months";
         }
         else {
         	insurance.insuranceTerm().get(1).click();
-        	checkDuration = insurance.insuranceTerm().get(1).getAttribute("label");
+        	checkDuration = "6 months";
         }
         
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='tax']")));
@@ -407,10 +462,56 @@ public class StepDefinitions extends initializeBrowser{
         if(cType.equals("Individual")) {
 	        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 	        //Send user date of birth
+	        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='dob']")));
 	        insurance.iDOB().sendKeys(dob);
 	        checkDOB = insurance.iDOB().getAttribute("value");
 	        
+	        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='underage']")));
 	        //add extra values present on page
+	        String ageCheck[] = checkDOB.split("/", 3);
+	    	String age = ageCheck[2];
+	    	
+	    	//Check user input age as site automatically generates Yes or no under certain conditions
+	    	//Todays date to check agaisnt inputted birth date
+	    	
+	    	if(Integer.parseInt(age) <= 1992) {
+	    		if(underAge.equals("Yes")) {
+	    			insurance.insuranceAge().get(1).click();
+	    			checkAge = insurance.insuranceAge().get(1).getAttribute("value");
+	    			System.out.println("Age: " + checkAge);
+	    		}
+	    		else {//licence and demerit point details
+	    			insurance.insuranceAge().get(0).click();
+	    			checkAge = insurance.insuranceAge().get(0).getAttribute("value");
+	    			System.out.println("Age: " + checkAge);
+	    			
+	    			wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='licence']")));
+	    			if(validLicence.equals("No")) {
+	    				insurance.validLicence().get(0).click();
+	    				checkLicence = insurance.validLicence().get(0).getAttribute("value");
+	    				System.out.println("Licence: " + checkLicence);
+	    			}
+	    			else {
+	    				insurance.validLicence().get(1).click();
+	    				checkLicence = insurance.validLicence().get(1).getAttribute("value");
+	    				System.out.println("Licence: " + checkLicence);
+	    				
+	    				wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='demerit']")));
+	    				//now do demerit points
+	    				if(dpLoss == 0) {
+	    					insurance.demeritPoints().get(0).click();
+	    					checkDemeritLoss = insurance.demeritPoints().get(0).getAttribute("value");
+	    					System.out.println("Demerit: " + checkDemeritLoss);
+	    				}
+	    				else {
+	    					insurance.demeritPoints().get(1).click();
+	    					checkDemeritLoss = insurance.demeritPoints().get(1).getAttribute("value");
+	    					System.out.println("Demerit: " + checkDemeritLoss);
+	    				}
+	    			}
+	    		}
+	    		
+	    	}
         }
         
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("button[id='button_forward']")));

@@ -18,6 +18,9 @@ public class insurancePreferences {
 	By insuranceTerm = By.cssSelector("input[name='term']");
 	By taxCredit = By.cssSelector("input[name='tax']");
 	By birthDate = By.cssSelector("input[name='dob']");
+	By age = By.cssSelector("input[name='underage']");
+	By licence = By.cssSelector("input[name='licence']");
+	By demerits = By.cssSelector("input[name='demerit']");
 	By iContinue = By.cssSelector("button[id='button_forward']");
 	
 	public insurancePreferences(WebDriver driver) {
@@ -49,5 +52,14 @@ public class insurancePreferences {
 	}
 	public WebElement insuranceContinue() {
 		return driver.findElement(iContinue);
+	}
+	public List<WebElement> insuranceAge() {
+		return driver.findElements(age);
+	}
+	public List<WebElement> validLicence() {
+		return driver.findElements(licence);
+	}
+	public List<WebElement> demeritPoints() {
+		return driver.findElements(demerits);
 	}
 }
