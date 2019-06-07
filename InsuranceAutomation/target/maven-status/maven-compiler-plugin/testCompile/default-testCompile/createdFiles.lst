@@ -2,7 +2,6 @@ pageObjects\vehicleDetails.class
 pageObjects\finalQuote.class
 pageObjects\GreenSlipQuote.class
 stepDefinitions\StepDefinitions$customerType.class
-stepDefinitions\StepDefinitions$radioChoice.class
 pageObjects\CTP.class
 stepDefinitions\StepDefinitions.class
 pageObjects\insurancePreferences.class

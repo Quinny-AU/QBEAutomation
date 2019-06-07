@@ -45,4 +45,8 @@ public class initializeBrowser {
 		//Returns the initialized type of driver and launches browser
 		return driver;
 	}
+	public void setPropertyFile() throws IOException {
+		fs = new FileInputStream("C:\\Users\\777632\\eclipse-workspace\\InsuranceAutomation\\src\\main\\java\\resources\\data.properties");
+		prop.load(fs);
+	}
 }
