@@ -271,10 +271,13 @@ public class StepDefinitions extends initializeBrowser{
     	check = str[1];
     	//needed this due to formatting differences on the final quote page
     	if(checkCustType.equals("Individual / sole trader")) {
-    		System.out.println("Need to manipulate");
     		check = check.replaceAll("\\/ ... ", "\\ / ");
     		check = check.replace("S", "s");
     	}
+    	
+    	//Chrome and firefox use different formatting and spaces so below is needed
+    	check = check.replaceAll(" ", "");
+		checkCustType = checkCustType.replaceAll(" ", "");
     	
     	Assert.assertEquals(checkCustType, check);
     	
@@ -466,8 +469,7 @@ public class StepDefinitions extends initializeBrowser{
 	        insurance.iDOB().sendKeys(dob);
 	        checkDOB = insurance.iDOB().getAttribute("value");
 	        
-	        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='underage']")));
-	        //add extra values present on page
+	        //If any driver of vehicle is underage the above check will appear and continue with the next steps
 	        String ageCheck[] = checkDOB.split("/", 3);
 	    	String age = ageCheck[2];
 	    	
@@ -475,6 +477,9 @@ public class StepDefinitions extends initializeBrowser{
 	    	//Todays date to check agaisnt inputted birth date
 	    	
 	    	if(Integer.parseInt(age) <= 1992) {
+	    		wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[name='underage']")));
+	    		WebElement element = driver.findElement(By.xpath("//*[@id='button_back']"));
+	        	((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
 	    		if(underAge.equals("Yes")) {
 	    			insurance.insuranceAge().get(1).click();
 	    			checkAge = insurance.insuranceAge().get(1).getAttribute("value");
